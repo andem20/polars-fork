@@ -341,6 +341,12 @@ pub(crate) enum PolarsSQLFunctions {
     /// ```
     #[cfg(feature = "nightly")]
     InitCap,
+    /// SQL json_value function.
+    /// Returns all values for the specified json path and null if not found.
+    /// ```sql
+    /// SELECT json_value(column_1, '$.the_key') from df;
+    /// ```
+    JsonValue,
     /// SQL 'left' function.
     /// Returns the first (leftmost) `n` characters.
     /// ```sql
@@ -755,6 +761,7 @@ impl PolarsSQLFunctions {
             "greatest",
             "if",
             "ifnull",
+            "json_value",
             "initcap",
             "last",
             "least",
@@ -894,6 +901,7 @@ impl PolarsSQLFunctions {
             "ends_with" => Self::EndsWith,
             #[cfg(feature = "nightly")]
             "initcap" => Self::InitCap,
+            "json_value" => Self::JsonValue,
             "length" | "char_length" | "character_length" => Self::Length,
             "left" => Self::Left,
             "lower" => Self::Lower,
@@ -1566,6 +1574,8 @@ impl SQLFunctionVisitor<'_> {
             // User-defined
             // ----
             Udf(func_name) => self.visit_udf(&func_name),
+
+            JsonValue => self.visit_binary::<Expr>(|a, b| a.str().json_path_match(b)),
         }
     }
 
